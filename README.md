@@ -1,7 +1,7 @@
 Leaflet EdgeMarker
 ==================
 
-Works with Leaflet 0.7x and 1.0x
+Works with Leaflet >= 1.9.4
 
 Leaflet EdgeMarker is a [Leaflet](http://leafletjs.com/) plugin which allows you to indicate Markers, Circles and CircleMarkers that are outside of the current view by displaying CircleMarkers at the edges of the map.
 
@@ -12,10 +12,6 @@ Check out the [demo](http://ubergesundheit.github.io/Leaflet.EdgeMarker)
 
 Usage
 -----
-
-  * `bower install Leaflet.EdgeMarker`
-
-or
 
   * Download the `Leaflet.EdgeMarker.js`
 

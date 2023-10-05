@@ -1,4 +1,4 @@
-(function(L) {
+(function (L) {
   'use strict';
   var classToExtend = 'Class';
   if (L.version.charAt(0) !== '0') {
@@ -11,28 +11,29 @@
       distanceOpacityFactor: 4,
       layerGroup: null,
       rotateIcons: true,
-      findEdge : function (map){
-        return L.bounds([0,0], map.getSize());
+      findEdge: function (map) {
+        return L.bounds([0, 0], map.getSize());
       },
       icon: L.icon({
         iconUrl: L.Icon.Default.imagePath + '/edge-arrow-marker.png',
         clickable: true,
         iconSize: [48, 48],
-        iconAnchor: [24, 24]
-      })
+        iconAnchor: [24, 24],
+      }),
+      onClick: null,
     },
 
-    initialize: function(options) {
+    initialize: function (options) {
       L.setOptions(this, options);
     },
 
-    addTo: function(map) {
+    addTo: function (map) {
       this._map = map;
 
       // add a method to get applicable features
       if (typeof map._getFeatures !== 'function') {
         L.extend(map, {
-          _getFeatures: function() {
+          _getFeatures: function () {
             var out = [];
             for (var l in this._layers) {
               if (typeof this._layers[l].getLatLng !== 'undefined') {
@@ -40,7 +41,7 @@
               }
             }
             return out;
-          }
+          },
         });
       }
 
@@ -54,7 +55,7 @@
       return this;
     },
 
-    destroy: function() {
+    destroy: function () {
       if (this._map && this._borderMarkerLayer) {
         this._map.off('move', this._addEdgeMarkers, this);
         this._map.off('viewreset', this._addEdgeMarkers, this);
@@ -68,15 +69,25 @@
       }
     },
 
-    onClick: function(e) {
-      this._map.setView(e.target.options.latlng, this._map.getZoom());
+    onClick: function (e) {
+      if (e.target.options.onClick) {
+        e.target.options.onClick();
+      } else {
+        this._map.setView(e.target.options.latlng, this._map.getZoom());
+      }
     },
 
-    onAdd: function() {},
+    onAdd: function () {
+      /* no op */
+    },
+
+    onRemove: function () {
+      /* no op */
+    },
 
     _borderMarkerLayer: undefined,
 
-    _addEdgeMarkers: function() {
+    _addEdgeMarkers: function () {
       if (typeof this._borderMarkerLayer === 'undefined') {
         this._borderMarkerLayer = new L.LayerGroup();
       }
@@ -95,11 +106,10 @@
       var markerHeight = this.options.icon.options.iconSize[1];
 
       for (var i = 0; i < features.length; i++) {
-        var currentMarkerPosition = this._map.latLngToContainerPoint(
-          features[i].getLatLng()
-        );
+        var currentMarkerPosition = this._map.latLngToContainerPoint(features[i].getLatLng());
 
-        if (currentMarkerPosition.y < mapPixelBounds.min.y ||
+        if (
+          currentMarkerPosition.y < mapPixelBounds.min.y ||
           currentMarkerPosition.y > mapPixelBounds.max.y ||
           currentMarkerPosition.x > mapPixelBounds.max.x ||
           currentMarkerPosition.x < mapPixelBounds.min.x
@@ -117,46 +127,46 @@
           var center = mapPixelBounds.getCenter();
 
           var rad = Math.atan2(center.y - y, center.x - x);
-          var rad2TopLeftcorner = Math.atan2(center.y-mapPixelBounds.min.y,center.x-mapPixelBounds.min.x);
+          var rad2TopLeftcorner = Math.atan2(
+            center.y - mapPixelBounds.min.y,
+            center.x - mapPixelBounds.min.x
+          );
 
           // target is in between diagonals window/ hourglass
           // more out in y then in x
-          if (Math.abs(rad) > rad2TopLeftcorner && Math.abs (rad) < Math.PI -rad2TopLeftcorner) {
-
+          if (Math.abs(rad) > rad2TopLeftcorner && Math.abs(rad) < Math.PI - rad2TopLeftcorner) {
             // bottom out
-            if (y < center.y ){
-              y = mapPixelBounds.min.y + markerHeight/2;
-              x = center.x -  (center.y-y) / Math.tan(Math.abs(rad));
+            if (y < center.y) {
+              y = mapPixelBounds.min.y + markerHeight / 2;
+              x = center.x - (center.y - y) / Math.tan(Math.abs(rad));
               markerDistance = currentMarkerPosition.y - mapPixelBounds.y;
             // top out
-            }else{
-              y = mapPixelBounds.max.y - markerHeight/2;
-              x = center.x - (y-center.y)/ Math.tan(Math.abs(rad));
+            } else {
+              y = mapPixelBounds.max.y - markerHeight / 2;
+              x = center.x - (y - center.y) / Math.tan(Math.abs(rad));
               markerDistance = -currentMarkerPosition.y;
             }
-          }else {
-
+          } else {
             // left out
-            if (x < center.x ){
-              x = mapPixelBounds.min.x + markerWidth/2;
-              y = center.y -  (center.x-x ) *Math.tan(rad);
+            if (x < center.x) {
+              x = mapPixelBounds.min.x + markerWidth / 2;
+              y = center.y - (center.x - x) * Math.tan(rad);
               markerDistance = -currentMarkerPosition.x;
             // right out
-            }else{
-              x = mapPixelBounds.max.x - markerWidth/2;
-              y = center.y +  (x - center.x) *Math.tan(rad);
+            } else {
+              x = mapPixelBounds.max.x - markerWidth / 2;
+              y = center.y + (x - center.x) * Math.tan(rad);
               markerDistance = currentMarkerPosition.x - mapPixelBounds.x;
             }
           }
           // correction so that is always has same distance to edge
 
           // top out (top has y=0)
-          if (y < mapPixelBounds.min.y + markerHeight/2) {
-            y = mapPixelBounds.min.y + markerHeight/2;
+          if (y < mapPixelBounds.min.y + markerHeight / 2) {
+            y = mapPixelBounds.min.y + markerHeight / 2;
             // bottom out
-          }
-          else if (y > mapPixelBounds.max.y - markerHeight/2) {
-            y = mapPixelBounds.max.y - markerHeight/2 ;
+          } else if (y > mapPixelBounds.max.y - markerHeight / 2) {
+            y = mapPixelBounds.max.y - markerHeight / 2;
           }
           // right out
           if (x > mapPixelBounds.max.x - markerWidth / 2) {
@@ -175,17 +185,16 @@
 
           // rotate markers
           if (this.options.rotateIcons) {
-            var angle = rad / Math.PI * 180;
+            var angle = (rad / Math.PI) * 180;
             newOptions.angle = angle;
           }
 
           var ref = { latlng: features[i].getLatLng() };
           newOptions = L.extend({}, newOptions, ref);
 
-          var marker = L.rotatedMarker(
-            this._map.containerPointToLatLng([x, y]),
-            newOptions
-          ).addTo(this._borderMarkerLayer);
+          var marker = L.rotatedMarker(this._map.containerPointToLatLng([x, y]), newOptions).addTo(
+            this._borderMarkerLayer
+          );
 
           marker.on('click', this.onClick, marker);
         }
@@ -193,7 +202,7 @@
       if (!this._map.hasLayer(this._borderMarkerLayer)) {
         this._borderMarkerLayer.addTo(this._map);
       }
-    }
+    },
   });
 
   /*
@@ -201,7 +210,7 @@
    */
   L.RotatedMarker = L.Marker.extend({
     options: {
-      angle: 0
+      angle: 0,
     },
 
     statics: {
@@ -210,23 +219,22 @@
         'WebkitTransformOrigin',
         'OTransformOrigin',
         'MozTransformOrigin',
-        'msTransformOrigin'
-      ])
+        'msTransformOrigin',
+      ]),
     },
 
-    _initIcon: function() {
+    _initIcon: function () {
       L.Marker.prototype._initIcon.call(this);
 
       this._icon.style[L.RotatedMarker.TRANSFORM_ORIGIN] = '50% 50%';
     },
 
-    _setPos: function(pos) {
+    _setPos: function (pos) {
       L.Marker.prototype._setPos.call(this, pos);
 
       if (L.DomUtil.TRANSFORM) {
         // use the CSS transform rule if available
-        this._icon.style[L.DomUtil.TRANSFORM] +=
-          ' rotate(' + this.options.angle + 'deg)';
+        this._icon.style[L.DomUtil.TRANSFORM] += ' rotate(' + this.options.angle + 'deg)';
       } else if (L.Browser.ie) {
         // fallback for IE6, IE7, IE8
         var rad = this.options.angle * (Math.PI / 180),
@@ -245,16 +253,16 @@
       }
     },
 
-    setAngle: function(ang) {
+    setAngle: function (ang) {
       this.options.angle = ang;
-    }
+    },
   });
 
-  L.rotatedMarker = function(pos, options) {
+  L.rotatedMarker = function (pos, options) {
     return new L.RotatedMarker(pos, options);
   };
 
-  L.edgeMarker = function(options) {
+  L.edgeMarker = function (options) {
     return new L.EdgeMarker(options);
   };
 })(L);
